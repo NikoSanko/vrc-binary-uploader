@@ -1,0 +1,131 @@
+openapi: 3.0.0
+info:
+  title: VRC ImageUploader API
+  description: 画像やその他データを独自形式に変換したファイルをアップロードするAPI
+  version: 1.0.0
+servers:
+- description: ローカル開発環境
+  url: http://localhost:9090/api/v1
+  
+paths:
+  /conversions/images:
+    post:
+      summary: １枚の画像をDDS形式に変換し、ストレージにアップロードする
+      description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+      operationId: conversionImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                signedUrl:
+                  $ref: "#/components/schemas/SignedUrl"
+                metadata:
+                  $ref: "#/components/schemas/ImageMetadata"
+                file:
+                  $ref: "#/components/schemas/File"
+              required:
+                - signedUrl
+                - metadata
+                - files
+      responses:
+        '200':
+          $ref: "#/components/responses/Success200"
+        '400':
+          $ref: "#/components/responses/BadRequest400"
+        '500':
+          $ref: "#/components/responses/InternalServerError500"
+  /conversions/images/batch:
+    post:
+      summary: 複数枚の画像をDDS形式に変換し、1ファイルにまとめ、ストレージにアップロードする
+      description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+      operationId: conversionImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                signedUrl:
+                  $ref: "#/components/schemas/SignedUrl"
+                metadata:
+                  $ref: "#/components/schemas/ImageMetadata"
+                files:
+                  $ref: "#/components/schemas/Files"
+              required:
+                - signedUrl
+                - metadata
+                - files
+      responses:
+        '200':
+          $ref: "#/components/responses/Success200"
+        '400':
+          $ref: "#/components/responses/BadRequest400"
+        '500':
+          $ref: "#/components/responses/InternalServerError500"
+components:
+  responses:
+    Success200:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+
+    BadRequest400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "success"
+        data:
+          nullable: true
+      required:
+        - message
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Bad Request"
+        errorCode:
+          type: string
+          example: "INVALID_INPUT"
+        details:
+          nullable: true
+      required:
+        - message
+        - errorCode
+
+    SignedUrl:
+      type: string
+      description: ストレージサービスの署名付きURL
+    ImageMetadata:
+      type: string
+      description: 画像ファイルのメタデータのJSON配列
+      example: '[{"fileName": "a.png"}, {"fileName": "b.jpg"}]'
+    Files:
+      type: array
+      items:
+        $ref: "#/components/schemas/File"
+    File:
+      type: string
+      format: binary
