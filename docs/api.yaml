@@ -8,11 +8,20 @@ servers:
   url: http://localhost:9090/api/v1
   
 paths:
-  /conversions/images:
+  /ping:
+    get:
+      summary: 疎通確認
+      operationId: ping
+      responses:
+        '200':
+          $ref: "#/components/responses/Success200"
+        '500':
+          $ref: "#/components/responses/InternalServerError500"
+  /images:
     post:
       summary: １枚の画像をDDS形式に変換し、ストレージにアップロードする
       description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
-      operationId: conversionImage
+      operationId: uploadImage
       requestBody:
         required: true
         content:
@@ -37,11 +46,11 @@ paths:
           $ref: "#/components/responses/BadRequest400"
         '500':
           $ref: "#/components/responses/InternalServerError500"
-  /conversions/images/batch:
+  /merged-images:
     post:
       summary: 複数枚の画像をDDS形式に変換し、1ファイルにまとめ、ストレージにアップロードする
       description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
-      operationId: conversionImage
+      operationId: uploadMergedImage
       requestBody:
         required: true
         content:
@@ -58,7 +67,7 @@ paths:
               required:
                 - signedUrl
                 - metadata
-                - files
+                - file
       responses:
         '200':
           $ref: "#/components/responses/Success200"
@@ -66,6 +75,37 @@ paths:
           $ref: "#/components/responses/BadRequest400"
         '500':
           $ref: "#/components/responses/InternalServerError500"
+    put:
+      summary: 複数画像を束ねたファイルの指定枚目だけ更新する
+      operationId: updateMergedImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                signedUrl:
+                  $ref: "#/components/schemas/SignedUrl"
+                index:
+                  $ref: "#/components/schemas/Index"
+                metadata:
+                  $ref: "#/components/schemas/ImageMetadata"
+                file:
+                  $ref: "#/components/schemas/File"
+              required:
+                - signedUrl
+                - index
+                - metadata
+                - file
+      responses:
+        '200':
+          $ref: "#/components/responses/Success200"
+        '400':
+          $ref: "#/components/responses/BadRequest400"
+        '500':
+          $ref: "#/components/responses/InternalServerError500"
+
 components:
   responses:
     Success200:
@@ -118,6 +158,11 @@ components:
     SignedUrl:
       type: string
       description: ストレージサービスの署名付きURL
+      example: "https://bucket-name.s3.ap-northeast-1.amazonaws.com/adverts/images/12345"
+    Index:
+      type: integer
+      description: 束ねたファイルの指定枚目
+      example: 0
     ImageMetadata:
       type: string
       description: 画像ファイルのメタデータのJSON配列

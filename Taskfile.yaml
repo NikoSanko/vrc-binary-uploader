@@ -1,0 +1,7 @@
+version: 3
+
+tasks:
+  gen:api:
+    desc: openAPIからコードを生成
+    cmds:
+      - docker run --rm -v "${PWD}:/local" openapitools/openapi-generator-cli generate  -i /local/docs/api.yaml -g rust-server -o /local/api

@@ -1,0 +1,228 @@
+openapi: 3.0.0
+info:
+  description: 画像やその他データを独自形式に変換したファイルをアップロードするAPI
+  title: VRC ImageUploader API
+  version: 1.0.0
+servers:
+- description: ローカル開発環境
+  url: http://localhost:9090/api/v1
+paths:
+  /ping:
+    get:
+      operationId: ping
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+          description: Successful operation
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal Server Error
+      summary: 疎通確認
+  /images:
+    post:
+      description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+      operationId: uploadImage
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/uploadImage_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+          description: Successful operation
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal Server Error
+      summary: １枚の画像をDDS形式に変換し、ストレージにアップロードする
+  /merged-images:
+    post:
+      description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+      operationId: uploadMergedImage
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/uploadMergedImage_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+          description: Successful operation
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal Server Error
+      summary: 複数枚の画像をDDS形式に変換し、1ファイルにまとめ、ストレージにアップロードする
+    put:
+      operationId: updateMergedImage
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/updateMergedImage_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+          description: Successful operation
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal Server Error
+      summary: 複数画像を束ねたファイルの指定枚目だけ更新する
+components:
+  responses:
+    Success200:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SuccessResponse"
+      description: Successful operation
+    BadRequest400:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Bad Request
+    InternalServerError500:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Internal Server Error
+  schemas:
+    SuccessResponse:
+      example:
+        data: ""
+        message: success
+      properties:
+        message:
+          example: success
+          type: string
+        data:
+          nullable: true
+      required:
+      - message
+      type: object
+    ErrorResponse:
+      example:
+        errorCode: INVALID_INPUT
+        details: ""
+        message: Bad Request
+      properties:
+        message:
+          example: Bad Request
+          type: string
+        errorCode:
+          example: INVALID_INPUT
+          type: string
+        details:
+          nullable: true
+      required:
+      - errorCode
+      - message
+      type: object
+    SignedUrl:
+      description: ストレージサービスの署名付きURL
+      example: https://bucket-name.s3.ap-northeast-1.amazonaws.com/adverts/images/12345
+      type: string
+    Index:
+      description: 束ねたファイルの指定枚目
+      example: 0
+      type: integer
+    ImageMetadata:
+      description: 画像ファイルのメタデータのJSON配列
+      example: "[{\"fileName\": \"a.png\"}, {\"fileName\": \"b.jpg\"}]"
+      type: string
+    Files:
+      items:
+        $ref: "#/components/schemas/File"
+      type: array
+    File:
+      format: binary
+      type: string
+    uploadImage_request:
+      properties:
+        signedUrl:
+          $ref: "#/components/schemas/SignedUrl"
+        metadata:
+          $ref: "#/components/schemas/ImageMetadata"
+        file:
+          $ref: "#/components/schemas/File"
+      required:
+      - files
+      - metadata
+      - signedUrl
+      type: object
+    updateMergedImage_request:
+      properties:
+        signedUrl:
+          $ref: "#/components/schemas/SignedUrl"
+        index:
+          $ref: "#/components/schemas/Index"
+        metadata:
+          $ref: "#/components/schemas/ImageMetadata"
+        file:
+          $ref: "#/components/schemas/File"
+      required:
+      - file
+      - index
+      - metadata
+      - signedUrl
+      type: object
+    uploadMergedImage_request:
+      properties:
+        signedUrl:
+          $ref: "#/components/schemas/SignedUrl"
+        metadata:
+          $ref: "#/components/schemas/ImageMetadata"
+        files:
+          $ref: "#/components/schemas/Files"
+      required:
+      - file
+      - metadata
+      - signedUrl
+      type: object
+
