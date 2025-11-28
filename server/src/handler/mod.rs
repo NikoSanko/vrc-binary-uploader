@@ -3,6 +3,9 @@ use axum::extract::Multipart;
 use axum_extra::extract::{CookieJar, Host};
 use generated::apis;
 use http::Method;
+use std::sync::Arc;
+
+use crate::service::UploadSingleImageService;
 
 mod ping;
 mod update_merged_image;
@@ -11,11 +14,13 @@ mod upload_merged_image;
 
 /// サーバー実装
 #[derive(Clone)]
-pub struct ServerImpl;
+pub struct ServerImpl {
+    upload_image_service: Arc<dyn UploadSingleImageService>,
+}
 
 impl ServerImpl {
-    pub fn new() -> Self {
-        ServerImpl
+    pub fn new(upload_image_service: Arc<dyn UploadSingleImageService>) -> Self {
+        Self { upload_image_service }
     }
 }
 
@@ -45,7 +50,14 @@ impl apis::default::Default<()> for ServerImpl {
         cookies: &CookieJar,
         body: Multipart,
     ) -> Result<apis::default::UploadImageResponse, ()> {
-        upload_image::handle(method, host, cookies, body).await
+        upload_image::handle(
+            method,
+            host,
+            cookies,
+            body,
+            self.upload_image_service.as_ref(),
+        )
+        .await
     }
 
     /// 複数枚の画像をDDS形式に変換し、1ファイルにまとめ、ストレージにアップロードする

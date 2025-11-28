@@ -60,9 +60,9 @@ pub async fn handle(
         );
     }
 
-    let signed_url = signed_url.unwrap();
-    let index = index.unwrap();
-    let file_data = _file_data.unwrap_or_default();
+    let _signed_url = signed_url.unwrap();
+    let _index = index.unwrap();
+    let _file_data = _file_data.unwrap_or_default();
 
     // TODO
 

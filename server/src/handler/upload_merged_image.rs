@@ -52,8 +52,8 @@ pub async fn handle(
         );
     }
 
-    let signed_url = signed_url.unwrap();
-    let files = _files;
+    let _signed_url = signed_url.unwrap();
+    let _files = _files;
 
     // TODO
 

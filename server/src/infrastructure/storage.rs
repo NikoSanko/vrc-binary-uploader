@@ -1,10 +1,24 @@
+use async_trait::async_trait;
 use log::info;
+
 use crate::infrastructure::error::{InfrastructureError, InfrastructureResult};
 
-pub struct Storage;
+#[async_trait]
+pub trait Storage: Send + Sync {
+    async fn upload_file(&self, signed_url: &str, file_data: &[u8]) -> InfrastructureResult<()>;
+}
 
-impl Storage {
-    pub async fn upload_file(signed_url: &str, file_data: &[u8]) -> InfrastructureResult<()> {
+pub struct DefaultStorage;
+
+impl DefaultStorage {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+#[async_trait]
+impl Storage for DefaultStorage {
+    async fn upload_file(&self, signed_url: &str, file_data: &[u8]) -> InfrastructureResult<()> {
         info!(
             "Uploading file to storage (signed_url: {}, size: {} bytes)",
             signed_url,

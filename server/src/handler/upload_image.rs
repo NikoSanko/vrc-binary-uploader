@@ -13,6 +13,7 @@ pub async fn handle(
     _host: &Host,
     _cookies: &CookieJar,
     mut body: Multipart,
+    service: &dyn UploadSingleImageService,
 ) -> Result<apis::default::UploadImageResponse, ()> {
     info!("upload_image() called");
 
@@ -56,7 +57,7 @@ pub async fn handle(
     let file_data = file_data.unwrap();
 
     // NOTE: 実処理
-    match UploadSingleImageService::execute(&signed_url, &file_data).await {
+    match service.execute(&signed_url, &file_data).await {
         Ok(_) => {}
         Err(ServiceError::Validation(msg)) => {
             return Ok(apis::default::UploadImageResponse::Status400_BadRequest(

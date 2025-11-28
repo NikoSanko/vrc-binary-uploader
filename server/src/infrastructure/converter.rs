@@ -1,10 +1,24 @@
-use log::*;
+use async_trait::async_trait;
+use log::info;
+
 use crate::infrastructure::error::{InfrastructureError, InfrastructureResult};
 
-pub struct Converter;
+#[async_trait]
+pub trait Converter: Send + Sync {
+    async fn png_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>>;
+}
 
-impl Converter {
-    pub async fn png_to_dds(image: &[u8]) -> InfrastructureResult<Vec<u8>> {
+pub struct DefaultConverter;
+
+impl DefaultConverter {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+#[async_trait]
+impl Converter for DefaultConverter {
+    async fn png_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>> {
         info!("Converting image to DDS format (size: {} bytes)", image.len());
 
         if image.is_empty() {
@@ -14,7 +28,6 @@ impl Converter {
         }
 
         // TODO: 実装を追加 - 実際の変換処理
-        // 今はサンプルとして入力そのままを返す
         Ok(image.to_vec())
     }
 }
