@@ -1,0 +1,18 @@
+[package]
+name = "image-uploader-server"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+generated = { path = "../generated", features = ["server"] }
+tokio = { version = "1.45", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+axum = "0.8"
+axum-extra = "0.12"
+async-trait = "0.1"
+http = "1"
+futures = "0.3"
+log = "0.4"
+env_logger = "0.11"
+
