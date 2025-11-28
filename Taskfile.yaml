@@ -10,3 +10,13 @@ tasks:
     desc: フォアグランドでサーバー起動
     cmds:
       - cargo run -p image-uploader-server
+
+  compose-up:
+    desc: コンテナをビルド＆起動
+    cmds:
+      - docker-compose -f ./docker-compose.yaml up --build
+  
+  copmose-down:
+    desc: コンテナを破棄
+    cmds:
+      - docker-compose -f ./docker-compose.yaml down

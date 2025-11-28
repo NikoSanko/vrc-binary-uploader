@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: image-uploader-api
+    ports:
+      - "9090:9090"
+    env_file:
+      - .env
+    environment:
+      - RUST_LOG=${RUST_LOG:-info}
+    restart: unless-stopped
+    networks:
+      - image-uploader-network
+
+networks:
+  image-uploader-network:
+    driver: bridge
+
