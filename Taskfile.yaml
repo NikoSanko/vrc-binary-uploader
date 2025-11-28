@@ -7,7 +7,7 @@ tasks:
       - docker run --rm -v "${PWD}:/local" openapitools/openapi-generator-cli generate -i /local/docs/api.yaml -g rust-axum -o /local/generated --additional-properties=packageName=generated
 
   dev:
-    desc: フォアグランドでサーバー起動
+    desc: ローカルでフォアグランドでサーバー起動
     cmds:
       - cargo run -p image-uploader-server
 
@@ -16,7 +16,7 @@ tasks:
     cmds:
       - docker-compose -f ./docker-compose.yaml up --build
   
-  copmose-down:
+  compose-down:
     desc: コンテナを破棄
     cmds:
       - docker-compose -f ./docker-compose.yaml down

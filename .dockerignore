@@ -1,7 +1,6 @@
 target/
 .git/
 .gitignore
-.env
 *.md
 .vscode/
 .idea/
