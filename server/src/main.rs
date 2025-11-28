@@ -3,13 +3,16 @@ use log::info;
 use std::net::SocketAddr;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
+use dotenvy::dotenv;
 
 mod handler;
+mod service;
+mod infrastructure;
 
 #[tokio::main]
 async fn main() {
+    dotenv().expect(".env file not found");
     env_logger::init();
-
     let server_impl = handler::ServerImpl::new();
 
     // 生成されたルーターを使用

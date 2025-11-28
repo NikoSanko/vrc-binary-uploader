@@ -60,10 +60,11 @@ pub async fn handle(
         );
     }
 
-    // TODO: 実装を追加
-    // - 指定されたインデックスの画像を更新
-    // - DDS形式に変換
-    // - ストレージにアップロード
+    let signed_url = signed_url.unwrap();
+    let index = index.unwrap();
+    let file_data = _file_data.unwrap_or_default();
+
+    // TODO
 
     Ok(
         apis::default::UpdateMergedImageResponse::Status200_SuccessfulOperation(

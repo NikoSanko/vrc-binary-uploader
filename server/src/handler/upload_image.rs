@@ -3,7 +3,9 @@ use axum_extra::extract::{CookieJar, Host};
 use generated::apis;
 use generated::models;
 use http::Method;
-use log::info;
+use log::{info, warn};
+
+use crate::service::{UploadSingleImageService, ServiceError};
 
 /// １枚の画像をDDS形式に変換し、ストレージにアップロードする
 pub async fn handle(
@@ -15,11 +17,11 @@ pub async fn handle(
     info!("upload_image() called");
 
     let mut signed_url: Option<String> = None;
-    let mut metadata: Option<String> = None;
-    let mut _file_data: Option<Vec<u8>> = None;
+    let mut file_data: Option<Vec<u8>> = None;
 
     while let Ok(Some(field)) = body.next_field().await {
         let name = field.name().unwrap_or("").to_string();
+        info!("name: {}", name);
         if let Ok(data) = field.bytes().await {
             match name.as_str() {
                 "signedUrl" => {
@@ -27,22 +29,20 @@ pub async fn handle(
                         signed_url = Some(s);
                     }
                 }
-                "metadata" => {
-                    if let Ok(s) = String::from_utf8(data.to_vec()) {
-                        metadata = Some(s);
-                    }
-                }
                 "file" => {
-                    _file_data = Some(data.to_vec());
+                    info!("file: {}", data.len());
+                    file_data = Some(data.to_vec());
                 }
                 _ => {
-                    log::warn!("Unknown field: {}", name);
+                    warn!("Unknown field: {}", name);
                 }
             }
+        } else {
+            warn!("Failed to parse body to bytes");
         }
     }
 
-    if signed_url.is_none() || metadata.is_none() {
+    if signed_url.is_none() || file_data.is_none() {
         return Ok(apis::default::UploadImageResponse::Status400_BadRequest(
             models::ErrorResponse {
                 message: "Bad Request".to_string(),
@@ -52,9 +52,32 @@ pub async fn handle(
         ));
     }
 
-    // TODO: 実装を追加
-    // - 画像をDDS形式に変換
-    // - ストレージにアップロード
+    let signed_url = signed_url.unwrap();
+    let file_data = file_data.unwrap();
+
+    // NOTE: 実処理
+    match UploadSingleImageService::execute(&signed_url, &file_data).await {
+        Ok(_) => {}
+        Err(ServiceError::Validation(msg)) => {
+            return Ok(apis::default::UploadImageResponse::Status400_BadRequest(
+                models::ErrorResponse {
+                    message: msg,
+                    error_code: "INVALID_INPUT".to_string(),
+                    details: None,
+                },
+            ));
+        }
+        Err(ServiceError::Infrastructure(e)) => {
+            log::error!("Infrastructure error: {}", e);
+            return Ok(apis::default::UploadImageResponse::Status500_InternalServerError(
+                models::ErrorResponse {
+                    message: "Internal Server Error".to_string(),
+                    error_code: "STORAGE_UPLOAD_FAILED".to_string(),
+                    details: None,
+                },
+            ));
+        }
+    }
 
     Ok(
         apis::default::UploadImageResponse::Status200_SuccessfulOperation(

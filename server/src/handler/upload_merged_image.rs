@@ -52,10 +52,10 @@ pub async fn handle(
         );
     }
 
-    // TODO: 実装を追加
-    // - 複数画像をDDS形式に変換
-    // - 1ファイルにまとめる
-    // - ストレージにアップロード
+    let signed_url = signed_url.unwrap();
+    let files = _files;
+
+    // TODO
 
     Ok(
         apis::default::UploadMergedImageResponse::Status200_SuccessfulOperation(

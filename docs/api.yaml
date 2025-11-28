@@ -31,14 +31,11 @@ paths:
               properties:
                 signedUrl:
                   $ref: "#/components/schemas/SignedUrl"
-                metadata:
-                  $ref: "#/components/schemas/ImageMetadata"
                 file:
                   $ref: "#/components/schemas/File"
               required:
                 - signedUrl
-                - metadata
-                - files
+                - file
       responses:
         '200':
           $ref: "#/components/responses/Success200"
