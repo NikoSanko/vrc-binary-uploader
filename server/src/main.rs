@@ -10,6 +10,7 @@ use dotenvy::dotenv;
 mod handler;
 mod service;
 mod infrastructure;
+mod mock;
 
 #[tokio::main]
 async fn main() {

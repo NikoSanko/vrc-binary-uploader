@@ -31,3 +31,23 @@ impl Converter for DefaultConverter {
         Ok(image.to_vec())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Converter, DefaultConverter};
+
+    #[tokio::test]
+    async fn 画像が空ならエラーを返す() {
+        let converter = DefaultConverter::new();
+        let result = converter.png_to_dds(&[]).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn 入力画像が存在する場合に成功を返す() {
+        let converter = DefaultConverter::new();
+        let input = vec![1, 2, 3];
+        let result = converter.png_to_dds(&input).await.unwrap();
+        assert_eq!(result, input);
+    }
+}

@@ -54,3 +54,55 @@ impl UploadSingleImageService for UploadSingleImageServiceImpl {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mock::infrastructure::{MockConverter, MockStorage};
+
+    #[tokio::test]
+    async fn 空のurlならエラーを返す() {
+        let service = UploadSingleImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::succeed()),
+        );
+        let result = service.execute("", &[1]).await;
+        assert!(matches!(result, Err(ServiceError::Validation(_))));
+    }
+
+    #[tokio::test]
+    async fn 変換に失敗したならエラーを返す() {
+        let service = UploadSingleImageServiceImpl::new(
+            Arc::new(MockConverter::fail("fail")),
+            Arc::new(MockStorage::succeed()),
+        );
+        let result = service
+            .execute("https://example.com", &[1])
+            .await;
+        assert!(matches!(result, Err(ServiceError::Infrastructure(_))));
+    }
+
+    #[tokio::test]
+    async fn 正しい入力値なら成功を返す() {
+        let service = UploadSingleImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::succeed()),
+        );
+        let result = service
+            .execute("https://example.com", &[1])
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn ストレージのアップロードに失敗したならエラーを返す() {
+        let service = UploadSingleImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::fail("upload failed")),
+        );
+        let result = service
+            .execute("https://example.com", &[1])
+            .await;
+        assert!(matches!(result, Err(ServiceError::Infrastructure(_))));
+    }
+}

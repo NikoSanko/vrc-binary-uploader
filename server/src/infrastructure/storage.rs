@@ -41,3 +41,29 @@ impl Storage for DefaultStorage {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{DefaultStorage, Storage};
+
+    #[tokio::test]
+    async fn 署名付きurlが空ならエラーを返す() {
+        let storage = DefaultStorage::new();
+        let result = storage.upload_file("", &[1, 2, 3]).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn 渡されたファイルが空ならエラーを返す() {
+        let storage = DefaultStorage::new();
+        let result = storage.upload_file("https://example.com", &[]).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn 入力値が正しい場合に成功を返す() {
+        let storage = DefaultStorage::new();
+        let result = storage.upload_file("https://example.com", &[1, 2, 3]).await;
+        assert!(result.is_ok());
+    }
+}
