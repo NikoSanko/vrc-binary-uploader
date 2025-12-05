@@ -1,0 +1,3 @@
+[submodule "crunch"]
+	path = crunch
+	url = git@github.com:DaemonEngine/crunch.git
