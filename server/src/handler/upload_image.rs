@@ -5,7 +5,7 @@ use generated::models;
 use http::Method;
 use log::{info, warn};
 
-use crate::service::{UploadSingleImageService, ServiceError};
+use crate::service::{ServiceError, UploadSingleImageService};
 
 /// １枚の画像をDDS形式に変換し、ストレージにアップロードする
 pub async fn handle(
@@ -70,13 +70,15 @@ pub async fn handle(
         }
         Err(ServiceError::Infrastructure(e)) => {
             log::error!("Infrastructure error: {}", e);
-            return Ok(apis::default::UploadImageResponse::Status500_InternalServerError(
-                models::ErrorResponse {
-                    message: "Internal Server Error".to_string(),
-                    error_code: "STORAGE_UPLOAD_FAILED".to_string(),
-                    details: None,
-                },
-            ));
+            return Ok(
+                apis::default::UploadImageResponse::Status500_InternalServerError(
+                    models::ErrorResponse {
+                        message: "Internal Server Error".to_string(),
+                        error_code: "STORAGE_UPLOAD_FAILED".to_string(),
+                        details: None,
+                    },
+                ),
+            );
         }
     }
 

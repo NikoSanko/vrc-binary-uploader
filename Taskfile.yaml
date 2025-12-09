@@ -9,7 +9,7 @@ tasks:
   gen:crunch:
     desc: crunchをビルド
     cmds:
-      - docker run --rm -v "${PWD}:/workspace" -w /workspace/crunch -e JOBS=$(nproc) ubuntu:latest bash -c "apt-get update && apt-get install -y cmake build-essential && cmake -S. -Bbuild && cmake --build build --parallel $JOBS && cp build/crunch /workspace/bin"
+      - docker run --rm -v "${PWD}:/workspace" -w /workspace/crunch -e JOBS=$(nproc) ubuntu:latest bash -c "apt-get update && apt-get install -y cmake build-essential && cmake -S. -Bbuild && cmake --build build --parallel $JOBS && cp build/crunch /workspace/server/resources/bin"
 
   dev:
     desc: ローカルでフォアグランドでサーバー起動

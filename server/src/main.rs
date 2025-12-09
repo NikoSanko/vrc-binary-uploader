@@ -1,3 +1,4 @@
+use dotenvy::dotenv;
 use generated::server;
 use log::info;
 use std::env;
@@ -5,12 +6,11 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
-use dotenvy::dotenv;
 
 mod handler;
-mod service;
 mod infrastructure;
 mod mock;
+mod service;
 
 #[tokio::main]
 async fn main() {
@@ -20,8 +20,7 @@ async fn main() {
     let converter = Arc::new(infrastructure::DefaultConverter::new());
     let storage = Arc::new(infrastructure::DefaultStorage::new());
     let upload_service = Arc::new(service::UploadSingleImageServiceImpl::new(
-        converter,
-        storage,
+        converter, storage,
     ));
     let server_impl = handler::ServerImpl::new(upload_service);
 
@@ -30,7 +29,8 @@ async fn main() {
 
     let host = env::var("API_SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = env::var("API_SERVER_PORT").unwrap_or_else(|_| "9090".to_string());
-    let addr = format!("{}:{}", host, port).parse::<SocketAddr>()
+    let addr = format!("{}:{}", host, port)
+        .parse::<SocketAddr>()
         .expect("Invalid host or port for API_SERVER_HOST or API_SERVER_PORT");
     info!("Starting server on http://{}", addr);
 

@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use std::sync::Arc;
 
-use crate::infrastructure::Storage;
 use crate::infrastructure::error::{InfrastructureError, InfrastructureResult};
+use crate::infrastructure::Storage;
 
 type StorageFn = dyn Fn(&str, &[u8]) -> InfrastructureResult<()> + Send + Sync;
 

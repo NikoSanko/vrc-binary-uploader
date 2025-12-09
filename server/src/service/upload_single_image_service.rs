@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use log::{info, error};
+use log::{error, info};
 use std::sync::Arc;
 
 use crate::infrastructure::{Converter, Storage};
@@ -16,10 +16,7 @@ pub struct UploadSingleImageServiceImpl {
 }
 
 impl UploadSingleImageServiceImpl {
-    pub fn new(
-        converter: Arc<dyn Converter>,
-        storage: Arc<dyn Storage>,
-    ) -> Self {
+    pub fn new(converter: Arc<dyn Converter>, storage: Arc<dyn Storage>) -> Self {
         Self { converter, storage }
     }
 }
@@ -46,10 +43,13 @@ impl UploadSingleImageService for UploadSingleImageServiceImpl {
             ServiceError::from(e)
         })?;
 
-        self.storage.upload_file(signed_url, &dds_data).await.map_err(|e| {
-            error!("Failed to upload file to storage: {}", e);
-            ServiceError::from(e)
-        })?;
+        self.storage
+            .upload_file(signed_url, &dds_data)
+            .await
+            .map_err(|e| {
+                error!("Failed to upload file to storage: {}", e);
+                ServiceError::from(e)
+            })?;
 
         Ok(())
     }
@@ -76,9 +76,7 @@ mod tests {
             Arc::new(MockConverter::fail("fail")),
             Arc::new(MockStorage::succeed()),
         );
-        let result = service
-            .execute("https://example.com", &[1])
-            .await;
+        let result = service.execute("https://example.com", &[1]).await;
         assert!(matches!(result, Err(ServiceError::Infrastructure(_))));
     }
 
@@ -88,9 +86,7 @@ mod tests {
             Arc::new(MockConverter::succeed()),
             Arc::new(MockStorage::succeed()),
         );
-        let result = service
-            .execute("https://example.com", &[1])
-            .await;
+        let result = service.execute("https://example.com", &[1]).await;
         assert!(result.is_ok());
     }
 
@@ -100,9 +96,7 @@ mod tests {
             Arc::new(MockConverter::succeed()),
             Arc::new(MockStorage::fail("upload failed")),
         );
-        let result = service
-            .execute("https://example.com", &[1])
-            .await;
+        let result = service.execute("https://example.com", &[1]).await;
         assert!(matches!(result, Err(ServiceError::Infrastructure(_))));
     }
 }

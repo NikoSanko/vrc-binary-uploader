@@ -1,7 +1,7 @@
-mod storage;
 mod converter;
 pub mod error;
+mod storage;
 
-pub use storage::{Storage, DefaultStorage};
 pub use converter::{Converter, DefaultConverter};
 pub use error::InfrastructureError;
+pub use storage::{DefaultStorage, Storage};

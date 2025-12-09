@@ -20,7 +20,9 @@ pub struct ServerImpl {
 
 impl ServerImpl {
     pub fn new(upload_image_service: Arc<dyn UploadSingleImageService>) -> Self {
-        Self { upload_image_service }
+        Self {
+            upload_image_service,
+        }
     }
 }
 

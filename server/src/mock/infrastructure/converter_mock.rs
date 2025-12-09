@@ -1,8 +1,10 @@
 use async_trait::async_trait;
+use log::info;
+use std::path::Path;
 use std::sync::Arc;
 
-use crate::infrastructure::Converter;
 use crate::infrastructure::error::{InfrastructureError, InfrastructureResult};
+use crate::infrastructure::Converter;
 
 type ConverterFn = dyn Fn(&[u8]) -> InfrastructureResult<Vec<u8>> + Send + Sync;
 
@@ -35,5 +37,14 @@ impl MockConverter {
 impl Converter for MockConverter {
     async fn png_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>> {
         (self.responder)(image)
+    }
+
+    async fn convert(&self, input_path: &Path, output_path: &Path) -> InfrastructureResult<()> {
+        info!(
+            "Converting image to DDS format (input_path: {}, output_path: {})",
+            input_path.display(),
+            output_path.display()
+        );
+        Ok(())
     }
 }
