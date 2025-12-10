@@ -75,11 +75,32 @@ mod tests {
         assert!(result.is_err());
     }
 
-    // TODO: 署名付きアップロードURLを使用
-    //#[tokio::test]
-    //async fn 入力値が正しい場合に成功を返す() {
-    //    let storage = DefaultStorage::new();
-    //    let result = storage.upload_file("https://example.com", &[1, 2, 3]).await;
-    //    assert!(result.is_ok());
-    //}
+    #[tokio::test]
+    async fn 入力値が正しい場合に成功を返す() {
+        use dotenvy::dotenv;
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        dotenv().expect(".env file not found");
+        env_logger::init();
+
+        // モックHTTPサーバーを起動
+        let mock_server = MockServer::start().await;
+
+        // PUTリクエストを受け付けるエンドポイントを設定
+        Mock::given(method("PUT"))
+            .and(path("/upload"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&mock_server)
+            .await;
+
+        // 署名付きURLとしてモックサーバーのエンドポイントを使用
+        let signed_url = format!("{}/upload", mock_server.uri());
+        let storage = DefaultStorage::new();
+        let file_data = vec![1, 2, 3, 4, 5];
+
+        // アップロードが成功することを検証
+        let result = storage.upload_file(&signed_url, &file_data).await;
+        assert!(result.is_ok());
+    }
 }
