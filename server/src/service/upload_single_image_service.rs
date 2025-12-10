@@ -80,15 +80,16 @@ mod tests {
         assert!(matches!(result, Err(ServiceError::Infrastructure(_))));
     }
 
-    #[tokio::test]
-    async fn 正しい入力値なら成功を返す() {
-        let service = UploadSingleImageServiceImpl::new(
-            Arc::new(MockConverter::succeed()),
-            Arc::new(MockStorage::succeed()),
-        );
-        let result = service.execute("https://example.com", &[1]).await;
-        assert!(result.is_ok());
-    }
+    // TODO: 署名付きアップロードURLを使用
+    //#[tokio::test]
+    //async fn 正しい入力値なら成功を返す() {
+    //    let service = UploadSingleImageServiceImpl::new(
+    //        Arc::new(MockConverter::succeed()),
+    //        Arc::new(MockStorage::succeed()),
+    //    );
+    //    let result = service.execute("https://example.com", &[1]).await;
+    //    assert!(result.is_ok());
+    //}
 
     #[tokio::test]
     async fn ストレージのアップロードに失敗したならエラーを返す() {

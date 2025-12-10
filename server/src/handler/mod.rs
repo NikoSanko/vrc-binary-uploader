@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use crate::service::UploadSingleImageService;
 
+mod messages;
 mod ping;
 mod update_merged_image;
 mod upload_image;

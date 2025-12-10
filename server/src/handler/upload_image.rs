@@ -5,6 +5,7 @@ use generated::models;
 use http::Method;
 use log::{info, warn};
 
+use crate::handler::messages::{error_code, error_message, success_message};
 use crate::service::{ServiceError, UploadSingleImageService};
 
 /// １枚の画像をDDS形式に変換し、ストレージにアップロードする
@@ -46,8 +47,8 @@ pub async fn handle(
     if signed_url.is_none() || file_data.is_none() {
         return Ok(apis::default::UploadImageResponse::Status400_BadRequest(
             models::ErrorResponse {
-                message: "Bad Request".to_string(),
-                error_code: "INVALID_INPUT".to_string(),
+                message: error_message::BAD_REQUEST.to_string(),
+                error_code: error_code::INVALID_INPUT.to_string(),
                 details: None,
             },
         ));
@@ -60,21 +61,22 @@ pub async fn handle(
     match service.execute(&signed_url, &file_data).await {
         Ok(_) => {}
         Err(ServiceError::Validation(msg)) => {
+            info!("Validation error: {}", msg);
             return Ok(apis::default::UploadImageResponse::Status400_BadRequest(
                 models::ErrorResponse {
-                    message: msg,
-                    error_code: "INVALID_INPUT".to_string(),
+                    message: error_message::BAD_REQUEST.to_string(),
+                    error_code: error_code::INVALID_INPUT.to_string(),
                     details: None,
                 },
             ));
         }
         Err(ServiceError::Infrastructure(e)) => {
-            log::error!("Infrastructure error: {}", e);
+            info!("Infrastructure error: {}", e);
             return Ok(
                 apis::default::UploadImageResponse::Status500_InternalServerError(
                     models::ErrorResponse {
-                        message: "Internal Server Error".to_string(),
-                        error_code: "STORAGE_UPLOAD_FAILED".to_string(),
+                        message: error_message::INTERNAL_SERVER_ERROR.to_string(),
+                        error_code: error_code::INFRASTRUCTURE_FAILED.to_string(),
                         details: None,
                     },
                 ),
@@ -85,7 +87,7 @@ pub async fn handle(
     Ok(
         apis::default::UploadImageResponse::Status200_SuccessfulOperation(
             models::SuccessResponse {
-                message: "success".to_string(),
+                message: success_message::SUCCESS.to_string(),
                 data: None,
             },
         ),
