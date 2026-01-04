@@ -16,7 +16,7 @@ COPY . .
 RUN cargo build --release -p image-uploader-server
 
 # ランタイムステージ
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 WORKDIR /app
 
@@ -28,14 +28,13 @@ RUN apt-get update && apt-get install -y \
 
 # ビルドしたバイナリをコピー
 COPY --from=builder /app/target/release/image-uploader-server /app/image-uploader-server
+COPY --from=builder /app/server/resources /app/server/resources
 
 # .env ファイルをコピー（dotenvy で使用するため）
 COPY .env /app/.env
 
 # ポートを公開
 EXPOSE 9090
-
-# 環境変数は docker-compose で設定される
 
 # アプリケーションを実行
 CMD ["./image-uploader-server"]

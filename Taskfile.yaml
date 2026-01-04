@@ -11,17 +11,23 @@ tasks:
     cmds:
       - docker run --rm -v "${PWD}:/workspace" -w /workspace/crunch -e JOBS=$(nproc) ubuntu:latest bash -c "apt-get update && apt-get install -y cmake build-essential && cmake -S. -Bbuild && cmake --build build --parallel $JOBS && cp build/crunch /workspace/server/resources/bin"
 
+  test:
+    desc: テストを実行
+    cmds:
+      - cargo test -p image-uploader-server
+
   dev:
     desc: ローカルでフォアグランドでサーバー起動
     cmds:
       - cargo run -p image-uploader-server
 
-  compose-up:
-    desc: コンテナをビルド＆起動
+  start:
+    desc: コンテナを立てる
     cmds:
-      - docker-compose -f ./docker-compose.yaml up --build
+      - docker build -t image-uploader-api ./
+      - docker run --rm -p 9090:9090 --name image-uploader-api image-uploader-api
   
-  compose-down:
-    desc: コンテナを破棄
+  stop:
+    desc: コンテナを停止
     cmds:
-      - docker-compose -f ./docker-compose.yaml down
+      - docker stop image-uploader-api
