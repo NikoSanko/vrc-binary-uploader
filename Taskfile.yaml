@@ -1,6 +1,30 @@
 version: 3
 
 tasks:
+  check:
+    desc: 開発環境が整っているかチェック
+    cmds:
+      - |
+        echo "開発環境をチェックしています..."
+        if ! command -v docker &> /dev/null; then
+          echo "エラー: dockerがインストールされていません"
+          exit 1
+        fi
+        echo "✓ docker: $(docker --version)"
+        if ! command -v rustc &> /dev/null; then
+          echo "エラー: rustがインストールされていません"
+          exit 1
+        fi
+        RUST_VERSION=$(rustc --version | grep -oE '[0-9]+\.[0-9]+' | head -1)
+        RUST_MAJOR=$(echo $RUST_VERSION | cut -d. -f1)
+        RUST_MINOR=$(echo $RUST_VERSION | cut -d. -f2)
+        if [ "$RUST_MAJOR" -lt 1 ] || ([ "$RUST_MAJOR" -eq 1 ] && [ "$RUST_MINOR" -lt 91 ]); then
+          echo "エラー: rust 1.91以上が必要です (現在: $(rustc --version))"
+          exit 1
+        fi
+        echo "✓ rust: $(rustc --version)"
+        echo "開発環境のチェックが完了しました"
+
   gen:api:
     desc: openAPIからコードを生成
     cmds:
