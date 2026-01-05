@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: VRC ImageUploader API
+  title: VRC Binary Uploader API
   description: 画像やその他データを独自形式に変換したファイルをアップロードするAPI
   version: 1.0.0
 servers:
