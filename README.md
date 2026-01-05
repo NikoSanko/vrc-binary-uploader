@@ -36,7 +36,7 @@ task start
 task stop
 ```
 
-サーバーは `http://localhost:9090` でアクセス可能です。（コンテナのポートは環境変数に影響されるので要修正）
+サーバーは `http://localhost:9090` でアクセス可能です。（コンテナのポートは環境変数に影響されるので注意）
 
 ## APIの追加や仕様変更
 APIの仕様は OpenAPI 形式で `docs/api.yaml` に定義されています。
