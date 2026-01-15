@@ -2,6 +2,7 @@
 members = [
     "generated",
     "server",
+    "mock-storage",
 ]
 resolver = "2"
 

@@ -1,0 +1,11 @@
+[package]
+name = "mock-storage"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio = { version = "1.45", features = ["full"] }
+axum = "0.8"
+log = "0.4"
+env_logger = "0.11"
+dotenvy = "0.15.7"

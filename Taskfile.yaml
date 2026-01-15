@@ -45,6 +45,11 @@ tasks:
     cmds:
       - cargo run -p image-uploader-server
 
+  mock-storage:
+    desc: モックストレージサーバーを起動
+    cmds:
+      - cargo run -p mock-storage
+
   start:
     desc: コンテナを立てる
     cmds:
