@@ -13,7 +13,7 @@ use crate::infrastructure::error::{InfrastructureError, InfrastructureResult};
 
 #[async_trait]
 pub trait Converter: Send + Sync {
-    async fn png_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>>;
+    async fn jpeg_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>>;
     async fn convert(&self, input_path: &Path, output_path: &Path) -> InfrastructureResult<()>;
 }
 
@@ -27,7 +27,7 @@ impl DefaultConverter {
 
 #[async_trait]
 impl Converter for DefaultConverter {
-    async fn png_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>> {
+    async fn jpeg_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>> {
         info!(
             "Converting image to DDS format (size: {} bytes)",
             image.len()
@@ -42,7 +42,7 @@ impl Converter for DefaultConverter {
         // NOTE: 入力用一時ファイル作成
         let temp_input_file = Builder::new()
             .prefix("temp_")
-            .suffix(".png")
+            .suffix(".jpeg")
             .tempfile()
             .map_err(|e| InfrastructureError::Io(e))?;
         temp_input_file
@@ -116,15 +116,15 @@ mod tests {
     #[tokio::test]
     async fn 画像が空ならエラーを返す() {
         let converter = DefaultConverter::new();
-        let result = converter.png_to_dds(&[]).await;
+        let result = converter.jpeg_to_dds(&[]).await;
         assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn 入力画像が存在する場合に成功を返す() {
         let converter = DefaultConverter::new();
-        let input = fs::read("resources/test.png").await.unwrap();
-        let result = converter.png_to_dds(&input).await;
+        let input = fs::read("resources/test.jpg").await.unwrap();
+        let result = converter.jpeg_to_dds(&input).await;
         assert!(result.is_ok());
         assert!(!result.unwrap().is_empty());
     }

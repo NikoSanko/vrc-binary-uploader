@@ -51,7 +51,7 @@ impl UploadMergedImageService for UploadMergedImageServiceImpl {
                 )));
             }
 
-            let dds_data = self.converter.png_to_dds(image).await.map_err(|e| {
+            let dds_data = self.converter.jpeg_to_dds(image).await.map_err(|e| {
                 error!("Failed to convert image {} to dds: {}", index, e);
                 ServiceError::from(e)
             })?;

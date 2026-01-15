@@ -35,7 +35,7 @@ impl MockConverter {
 
 #[async_trait]
 impl Converter for MockConverter {
-    async fn png_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>> {
+    async fn jpeg_to_dds(&self, image: &[u8]) -> InfrastructureResult<Vec<u8>> {
         (self.responder)(image)
     }
 
