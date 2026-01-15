@@ -5,7 +5,7 @@ use generated::apis;
 use http::Method;
 use std::sync::Arc;
 
-use crate::service::UploadSingleImageService;
+use crate::service::{UploadMergedImageService, UploadSingleImageService};
 
 mod messages;
 mod ping;
@@ -17,12 +17,17 @@ mod upload_merged_image;
 #[derive(Clone)]
 pub struct ServerImpl {
     upload_image_service: Arc<dyn UploadSingleImageService>,
+    upload_merged_image_service: Arc<dyn UploadMergedImageService>,
 }
 
 impl ServerImpl {
-    pub fn new(upload_image_service: Arc<dyn UploadSingleImageService>) -> Self {
+    pub fn new(
+        upload_image_service: Arc<dyn UploadSingleImageService>,
+        upload_merged_image_service: Arc<dyn UploadMergedImageService>,
+    ) -> Self {
         Self {
             upload_image_service,
+            upload_merged_image_service,
         }
     }
 }
@@ -71,7 +76,7 @@ impl apis::default::Default<()> for ServerImpl {
         cookies: &CookieJar,
         body: Multipart,
     ) -> Result<apis::default::UploadMergedImageResponse, ()> {
-        upload_merged_image::handle(method, host, cookies, body).await
+        upload_merged_image::handle(method, host, cookies, body, self.upload_merged_image_service.as_ref()).await
     }
 
     /// 複数画像を束ねたファイルの指定枚目だけ更新する

@@ -3,7 +3,10 @@ use axum_extra::extract::{CookieJar, Host};
 use generated::apis;
 use generated::models;
 use http::Method;
-use log::info;
+use log::{info, warn};
+
+use crate::handler::messages::{error_code, error_message, success_message};
+use crate::service::{ServiceError, UploadMergedImageService};
 
 /// 複数枚の画像をDDS形式に変換し、1ファイルにまとめ、ストレージにアップロードする
 pub async fn handle(
@@ -11,15 +14,16 @@ pub async fn handle(
     _host: &Host,
     _cookies: &CookieJar,
     mut body: Multipart,
+    service: &dyn UploadMergedImageService,
 ) -> Result<apis::default::UploadMergedImageResponse, ()> {
     info!("upload_merged_image() called");
 
     let mut signed_url: Option<String> = None;
-    let mut metadata: Option<String> = None;
-    let mut _files: Vec<Vec<u8>> = Vec::new();
+    let mut files: Vec<Vec<u8>> = Vec::new();
 
     while let Ok(Some(field)) = body.next_field().await {
         let name = field.name().unwrap_or("").to_string();
+        info!("field name: {}", name);
         if let Ok(data) = field.bytes().await {
             match name.as_str() {
                 "signedUrl" => {
@@ -27,40 +31,74 @@ pub async fn handle(
                         signed_url = Some(s);
                     }
                 }
-                "metadata" => {
-                    if let Ok(s) = String::from_utf8(data.to_vec()) {
-                        metadata = Some(s);
-                    }
-                }
                 "files" => {
-                    _files.push(data.to_vec());
+                    info!("file received: {} bytes", data.len());
+                    files.push(data.to_vec());
                 }
                 _ => {
-                    log::warn!("Unknown field: {}", name);
+                    warn!("Unknown field: {}", name);
                 }
             }
+        } else {
+            warn!("Failed to parse body to bytes");
         }
     }
 
-    if signed_url.is_none() || metadata.is_none() {
+    if signed_url.is_none() {
         return Ok(
             apis::default::UploadMergedImageResponse::Status400_BadRequest(models::ErrorResponse {
-                message: "Bad Request".to_string(),
-                error_code: "INVALID_INPUT".to_string(),
+                message: error_message::BAD_REQUEST.to_string(),
+                error_code: error_code::INVALID_INPUT.to_string(),
                 details: None,
             }),
         );
     }
 
-    let _signed_url = signed_url.unwrap();
-    let _files = _files;
+    if files.is_empty() {
+        return Ok(
+            apis::default::UploadMergedImageResponse::Status400_BadRequest(models::ErrorResponse {
+                message: error_message::BAD_REQUEST.to_string(),
+                error_code: error_code::INVALID_INPUT.to_string(),
+                details: None,
+            }),
+        );
+    }
 
-    // TODO
+    let signed_url = signed_url.unwrap();
+
+    // NOTE: 実処理
+    match service.execute(&signed_url, &files).await {
+        Ok(_) => {}
+        Err(ServiceError::Validation(msg)) => {
+            info!("Validation error: {}", msg);
+            return Ok(
+                apis::default::UploadMergedImageResponse::Status400_BadRequest(
+                    models::ErrorResponse {
+                        message: error_message::BAD_REQUEST.to_string(),
+                        error_code: error_code::INVALID_INPUT.to_string(),
+                        details: None,
+                    },
+                ),
+            );
+        }
+        Err(ServiceError::Infrastructure(e)) => {
+            info!("Infrastructure error: {}", e);
+            return Ok(
+                apis::default::UploadMergedImageResponse::Status500_InternalServerError(
+                    models::ErrorResponse {
+                        message: error_message::INTERNAL_SERVER_ERROR.to_string(),
+                        error_code: error_code::INFRASTRUCTURE_FAILED.to_string(),
+                        details: None,
+                    },
+                ),
+            );
+        }
+    }
 
     Ok(
         apis::default::UploadMergedImageResponse::Status200_SuccessfulOperation(
             models::SuccessResponse {
-                message: "success".to_string(),
+                message: success_message::SUCCESS.to_string(),
                 data: None,
             },
         ),

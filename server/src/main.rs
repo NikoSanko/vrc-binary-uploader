@@ -20,9 +20,14 @@ async fn main() {
     let converter = Arc::new(infrastructure::DefaultConverter::new());
     let storage = Arc::new(infrastructure::DefaultStorage::new());
     let upload_service = Arc::new(service::UploadSingleImageServiceImpl::new(
-        converter, storage,
+        converter.clone(),
+        storage.clone(),
     ));
-    let server_impl = handler::ServerImpl::new(upload_service);
+    let upload_merged_service = Arc::new(service::UploadMergedImageServiceImpl::new(
+        converter,
+        storage,
+    ));
+    let server_impl = handler::ServerImpl::new(upload_service, upload_merged_service);
 
     // 生成されたルーターを使用
     let app = server::new(server_impl).layer(ServiceBuilder::new().layer(CorsLayer::permissive()));
