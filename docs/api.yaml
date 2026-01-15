@@ -20,7 +20,10 @@ paths:
   /images:
     post:
       summary: １枚の画像をDDS形式に変換し、ストレージにアップロードする
-      description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+      description:
+        UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+        Unity上でのDDSテクスチャ読み込み仕様から、画像の縦横ピクセル数は4の倍数でないといけない
+        入力画像形式はjpeg
       operationId: uploadImage
       requestBody:
         required: true
@@ -46,7 +49,10 @@ paths:
   /merged-images:
     post:
       summary: 複数枚の画像をDDS形式に変換し、1ファイルにまとめ、ストレージにアップロードする
-      description: UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+      description:
+        UdonのStringLoadingの制約により、結果ファイルは10MB以下でないといけない
+        Unity上でのDDSテクスチャ読み込み仕様から、画像の縦横ピクセル数は4の倍数でないといけない
+        入力画像形式はjpeg
       operationId: uploadMergedImage
       requestBody:
         required: true
