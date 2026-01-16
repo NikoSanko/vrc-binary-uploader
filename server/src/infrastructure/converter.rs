@@ -123,7 +123,7 @@ mod tests {
     #[tokio::test]
     async fn 入力画像が存在する場合に成功を返す() {
         let converter = DefaultConverter::new();
-        let input = fs::read("resources/test.jpg").await.unwrap();
+        let input = fs::read("resources/4_multiple_size.jpg").await.unwrap();
         let result = converter.jpeg_to_dds(&input).await;
         assert!(result.is_ok());
         assert!(!result.unwrap().is_empty());

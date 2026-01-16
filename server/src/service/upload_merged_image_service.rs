@@ -131,6 +131,9 @@ fn create_merged_format(dds_data_list: &[Vec<u8>]) -> ServiceResult<Vec<u8>> {
 mod tests {
     use super::*;
     use crate::mock::infrastructure::{MockConverter, MockStorage};
+    use image::{ImageBuffer, ImageFormat, RgbImage};
+    use tokio::fs;
+    use std::io::Cursor;
 
     #[tokio::test]
     async fn 空のurlならエラーを返す() {
@@ -138,7 +141,10 @@ mod tests {
             Arc::new(MockConverter::succeed()),
             Arc::new(MockStorage::succeed()),
         );
-        let result = service.execute("", &[vec![1]]).await;
+        let jpeg_data = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+        let result = service.execute("", &[jpeg_data]).await;
         assert!(matches!(result, Err(ServiceError::Validation(_))));
     }
 
@@ -158,7 +164,10 @@ mod tests {
             Arc::new(MockConverter::fail("fail")),
             Arc::new(MockStorage::succeed()),
         );
-        let result = service.execute("https://example.com", &[vec![1]]).await;
+        let jpeg_data = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+        let result = service.execute("https://example.com", &[jpeg_data]).await;
         assert!(matches!(result, Err(ServiceError::Infrastructure(_))));
     }
 
@@ -168,8 +177,14 @@ mod tests {
             Arc::new(MockConverter::succeed()),
             Arc::new(MockStorage::succeed()),
         );
+        let jpeg_data1 = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+        let jpeg_data2 = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
         let result = service
-            .execute("https://example.com", &[vec![1], vec![2]])
+            .execute("https://example.com", &[jpeg_data1, jpeg_data2])
             .await;
         assert!(result.is_ok());
     }
@@ -180,7 +195,10 @@ mod tests {
             Arc::new(MockConverter::succeed()),
             Arc::new(MockStorage::fail("upload failed")),
         );
-        let result = service.execute("https://example.com", &[vec![1]]).await;
+        let jpeg_data = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+        let result = service.execute("https://example.com", &[jpeg_data]).await;
         assert!(matches!(result, Err(ServiceError::Infrastructure(_))));
     }
 
@@ -216,5 +234,82 @@ mod tests {
     fn 空のリストならエラーを返す() {
         let result = create_merged_format(&[]);
         assert!(matches!(result, Err(ServiceError::Validation(_))));
+    }
+
+    #[tokio::test]
+    async fn 空の画像データならバリデーションエラーを返す() {
+        let service = UploadMergedImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::succeed()),
+        );
+        let result = service
+            .execute("https://example.com", &[vec![]])
+            .await;
+        assert!(matches!(result, Err(ServiceError::Validation(_))));
+        if let Err(ServiceError::Validation(msg)) = result {
+            assert!(msg.contains("image at index 0 is empty"));
+        }
+    }
+
+    #[tokio::test]
+    async fn 無効な画像データならバリデーションエラーを返す() {
+        let service = UploadMergedImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::succeed()),
+        );
+        let invalid_data = vec![vec![0, 1, 2, 3, 4, 5]];
+        let result = service
+            .execute("https://example.com", &invalid_data)
+            .await;
+        assert!(matches!(result, Err(ServiceError::Validation(_))));
+        if let Err(ServiceError::Validation(msg)) = result {
+            assert!(msg.contains("failed to decode image at index 0"));
+        }
+    }
+
+    #[tokio::test]
+    async fn 四の倍数でないサイズの画像ならバリデーションエラーを返す() {
+        let service = UploadMergedImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::succeed()),
+        );
+
+        let jpeg_data = fs::read("resources/not_4_multiple_width.jpg")
+            .await
+            .unwrap();
+
+        let result = service
+            .execute("https://example.com", &[jpeg_data])
+            .await;
+        assert!(matches!(result, Err(ServiceError::Validation(_))));
+        if let Err(ServiceError::Validation(msg)) = result {
+            assert!(msg.contains("dimensions must be multiples of 4"));
+            assert!(msg.contains("index 0"));
+        }
+    }
+
+    #[tokio::test]
+    async fn 複数の画像のうち一つが無効ならエラーを返す() {
+        let service = UploadMergedImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::succeed()),
+        );
+
+        let valid_image_data = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+
+        let invalid_image_data = fs::read("resources/not_4_multiple_width.jpg")
+            .await
+            .unwrap();
+
+        let result = service
+            .execute("https://example.com", &[valid_image_data, invalid_image_data])
+            .await;
+        assert!(matches!(result, Err(ServiceError::Validation(_))));
+        if let Err(ServiceError::Validation(msg)) = result {
+            assert!(msg.contains("dimensions must be multiples of 4"));
+            assert!(msg.contains("index 1"));
+        }
     }
 }

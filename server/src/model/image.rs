@@ -9,16 +9,6 @@ pub struct Image {
 }
 
 impl Image {
-    /// 新しい画像インスタンスを作成（バリデーション付き）
-    ///
-    /// # エラー
-    /// - データが空の場合: `ImageError::EmptyData`
-    /// - 画像のデコードに失敗した場合: `ImageError::DecodeError`
-    /// - 縦横のピクセル数が4の倍数でない場合: `ImageError::InvalidDimensions`
-    pub fn try_new(data: Vec<u8>) -> Result<Self, ImageError> {
-        Self::try_from(data.as_slice())
-    }
-
     /// 画像データが空かどうかを確認
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
@@ -61,5 +51,73 @@ impl std::convert::TryFrom<&[u8]> for Image {
         Ok(Self {
             data: data.to_vec(),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::fs;
+
+    #[test]
+    fn データが空ならエラーを返す() {
+        let result = Image::try_from(&[] as &[u8]);
+        assert!(matches!(result, Err(ImageError::EmptyData)));
+    }
+
+    #[test]
+    fn 無効な画像データならデコードエラーを返す() {
+        let invalid_data = vec![0, 1, 2, 3, 4, 5];
+        let result = Image::try_from(invalid_data.as_slice());
+        assert!(matches!(result, Err(ImageError::DecodeError(_))));
+    }
+
+    #[tokio::test]
+    async fn 四の倍数のサイズなら成功する() {
+        let jpeg_data = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+        let result = Image::try_from(jpeg_data.as_slice());
+        assert!(result.is_ok());
+        let image = result.unwrap();
+        assert!(!image.is_empty());
+        assert_eq!(image.as_bytes().len(), jpeg_data.len());
+    }
+
+    #[tokio::test]
+    async fn 幅が四の倍数でないサイズならエラーを返す() {
+        let jpeg_data = fs::read("resources/not_4_multiple_width.jpg")
+            .await
+            .unwrap();
+        let result = Image::try_from(jpeg_data.as_slice());
+        assert!(matches!(result, Err(ImageError::InvalidDimensions { .. })));
+        if let Err(ImageError::InvalidDimensions { width, height: _ }) = result {
+            assert!(width % 4 != 0);
+        }
+    }
+
+    #[tokio::test]
+    async fn 高さが四の倍数でないサイズならエラーを返す() {
+        let jpeg_data = fs::read("resources/not_4_multiple_height.jpg")
+            .await
+            .unwrap();
+        let result = Image::try_from(jpeg_data.as_slice());
+        assert!(matches!(result, Err(ImageError::InvalidDimensions { .. })));
+        if let Err(ImageError::InvalidDimensions { width: _, height }) = result {
+            assert!(height % 4 != 0);
+        }
+    }
+
+    #[tokio::test]
+    async fn vec_u8からも変換できる() {
+        let jpeg_data = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+        let result = Image::try_from(jpeg_data);
+        assert!(result.is_ok());
+
+        let empty_data = vec![];
+        let result = Image::try_from(empty_data);
+        assert!(matches!(result, Err(ImageError::EmptyData)));
     }
 }
