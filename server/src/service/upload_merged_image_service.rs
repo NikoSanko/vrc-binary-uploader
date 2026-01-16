@@ -8,7 +8,7 @@ use crate::service::error::{ServiceError, ServiceResult};
 
 #[async_trait]
 pub trait UploadMergedImageService: Send + Sync {
-    async fn execute(&self, signed_url: &str, images: &[Vec<u8>]) -> ServiceResult<()>;
+    async fn execute(&self, presigned_url: &str, images: &[Vec<u8>]) -> ServiceResult<()>;
 }
 
 pub struct UploadMergedImageServiceImpl {
@@ -24,10 +24,10 @@ impl UploadMergedImageServiceImpl {
 
 #[async_trait]
 impl UploadMergedImageService for UploadMergedImageServiceImpl {
-    async fn execute(&self, signed_url: &str, images: &[Vec<u8>]) -> ServiceResult<()> {
-        if signed_url.trim().is_empty() {
+    async fn execute(&self, presigned_url: &str, images: &[Vec<u8>]) -> ServiceResult<()> {
+        if presigned_url.trim().is_empty() {
             return Err(ServiceError::Validation(
-                "signed url must not be empty".to_string(),
+                "presigned url must not be empty".to_string(),
             ));
         }
 
@@ -82,7 +82,7 @@ impl UploadMergedImageService for UploadMergedImageServiceImpl {
 
         // ストレージにアップロード
         self.storage
-            .upload_file(signed_url, &merged_data)
+            .upload_file(presigned_url, &merged_data)
             .await
             .map_err(|e| {
                 error!("Failed to upload merged file to storage: {}", e);
@@ -131,9 +131,7 @@ fn create_merged_format(dds_data_list: &[Vec<u8>]) -> ServiceResult<Vec<u8>> {
 mod tests {
     use super::*;
     use crate::mock::infrastructure::{MockConverter, MockStorage};
-    use image::{ImageBuffer, ImageFormat, RgbImage};
     use tokio::fs;
-    use std::io::Cursor;
 
     #[tokio::test]
     async fn 空のurlならエラーを返す() {

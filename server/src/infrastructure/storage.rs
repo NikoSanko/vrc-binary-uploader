@@ -7,7 +7,7 @@ use crate::infrastructure::error::{InfrastructureError, InfrastructureResult};
 
 #[async_trait]
 pub trait Storage: Send + Sync {
-    async fn upload_file(&self, signed_url: &str, file_data: &[u8]) -> InfrastructureResult<()>;
+    async fn upload_file(&self, presigned_url: &str, file_data: &[u8]) -> InfrastructureResult<()>;
 }
 
 pub struct DefaultStorage;
@@ -20,16 +20,16 @@ impl DefaultStorage {
 
 #[async_trait]
 impl Storage for DefaultStorage {
-    async fn upload_file(&self, signed_url: &str, file_data: &[u8]) -> InfrastructureResult<()> {
+    async fn upload_file(&self, presigned_url: &str, file_data: &[u8]) -> InfrastructureResult<()> {
         info!(
-            "Uploading file to storage (signed_url: {}, size: {} bytes)",
-            signed_url,
+            "Uploading file to storage (presigned_url: {}, size: {} bytes)",
+            presigned_url,
             file_data.len()
         );
 
-        if signed_url.trim().is_empty() {
+        if presigned_url.trim().is_empty() {
             return Err(InfrastructureError::Storage(
-                "signed url is missing".to_string(),
+                "presigned url is missing".to_string(),
             ));
         }
 
@@ -41,7 +41,7 @@ impl Storage for DefaultStorage {
 
         let client = Client::new();
         let response = client
-            .put(signed_url)
+            .put(presigned_url)
             .header("Content-Type", "application/octet-stream")
             .body(Bytes::copy_from_slice(file_data))
             .send()
@@ -95,12 +95,12 @@ mod tests {
             .await;
 
         // 署名付きURLとしてモックサーバーのエンドポイントを使用
-        let signed_url = format!("{}/upload", mock_server.uri());
+        let presigned_url = format!("{}/upload", mock_server.uri());
         let storage = DefaultStorage::new();
         let file_data = vec![1, 2, 3, 4, 5];
 
         // アップロードが成功することを検証
-        let result = storage.upload_file(&signed_url, &file_data).await;
+        let result = storage.upload_file(&presigned_url, &file_data).await;
         assert!(result.is_ok());
     }
 }

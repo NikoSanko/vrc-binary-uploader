@@ -21,7 +21,7 @@ pub async fn handle(
 ) -> Result<apis::default::UploadImageResponse, ()> {
     info!("upload_image() called");
 
-    let mut signed_url: Option<String> = None;
+    let mut presigned_url: Option<String> = None;
     let mut file_data: Option<Vec<u8>> = None;
 
     while let Ok(Some(field)) = body.next_field().await {
@@ -29,9 +29,9 @@ pub async fn handle(
         info!("name: {}", name);
         if let Ok(data) = field.bytes().await {
             match name.as_str() {
-                "signedUrl" => {
+                "presignedUrl" => {
                     if let Ok(s) = String::from_utf8(data.to_vec()) {
-                        signed_url = Some(s);
+                        presigned_url = Some(s);
                     }
                 }
                 "file" => {
@@ -47,7 +47,7 @@ pub async fn handle(
         }
     }
 
-    if signed_url.is_none() || file_data.is_none() {
+    if presigned_url.is_none() || file_data.is_none() {
         return Ok(apis::default::UploadImageResponse::Status400_BadRequest(
             models::ErrorResponse {
                 message: error_message::BAD_REQUEST.to_string(),
@@ -57,11 +57,11 @@ pub async fn handle(
         ));
     }
 
-    let signed_url = signed_url.unwrap();
+    let presigned_url = presigned_url.unwrap();
     let file_data = file_data.unwrap();
 
     // NOTE: 実処理
-    match service.execute(&signed_url, &file_data).await {
+    match service.execute(&presigned_url, &file_data).await {
         Ok(_) => {}
         Err(ServiceError::Validation(msg)) => {
             info!("Validation error: {}", msg);

@@ -22,7 +22,7 @@ pub async fn handle(
 ) -> Result<apis::default::UploadMergedImageResponse, ()> {
     info!("upload_merged_image() called");
 
-    let mut signed_url: Option<String> = None;
+    let mut presigned_url: Option<String> = None;
     let mut files: Vec<Vec<u8>> = Vec::new();
 
     while let Ok(Some(field)) = body.next_field().await {
@@ -30,9 +30,9 @@ pub async fn handle(
         info!("field name: {}", name);
         if let Ok(data) = field.bytes().await {
             match name.as_str() {
-                "signedUrl" => {
+                "presignedUrl" => {
                     if let Ok(s) = String::from_utf8(data.to_vec()) {
-                        signed_url = Some(s);
+                        presigned_url = Some(s);
                     }
                 }
                 "files" => {
@@ -48,7 +48,7 @@ pub async fn handle(
         }
     }
 
-    if signed_url.is_none() {
+    if presigned_url.is_none() {
         return Ok(
             apis::default::UploadMergedImageResponse::Status400_BadRequest(models::ErrorResponse {
                 message: error_message::BAD_REQUEST.to_string(),
@@ -68,10 +68,10 @@ pub async fn handle(
         );
     }
 
-    let signed_url = signed_url.unwrap();
+    let presigned_url = presigned_url.unwrap();
 
     // NOTE: 実処理
-    match service.execute(&signed_url, &files).await {
+    match service.execute(&presigned_url, &files).await {
         Ok(_) => {}
         Err(ServiceError::Validation(msg)) => {
             info!("Validation error: {}", msg);

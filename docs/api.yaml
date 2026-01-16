@@ -32,12 +32,12 @@ paths:
             schema:
               type: object
               properties:
-                signedUrl:
-                  $ref: "#/components/schemas/SignedUrl"
+                presignedUrl:
+                  $ref: "#/components/schemas/PresignedUrl"
                 file:
                   $ref: "#/components/schemas/File"
               required:
-                - signedUrl
+                - presignedUrl
                 - file
       responses:
         '200':
@@ -61,14 +61,14 @@ paths:
             schema:
               type: object
               properties:
-                signedUrl:
-                  $ref: "#/components/schemas/SignedUrl"
+                presignedUrl:
+                  $ref: "#/components/schemas/PresignedUrl"
                 metadata:
                   $ref: "#/components/schemas/ImageMetadata"
                 files:
                   $ref: "#/components/schemas/Files"
               required:
-                - signedUrl
+                - presignedUrl
                 - files
       responses:
         '200':
@@ -87,8 +87,8 @@ paths:
             schema:
               type: object
               properties:
-                signedUrl:
-                  $ref: "#/components/schemas/SignedUrl"
+                presignedUrl:
+                  $ref: "#/components/schemas/PresignedUrl"
                 index:
                   $ref: "#/components/schemas/Index"
                 metadata:
@@ -96,7 +96,7 @@ paths:
                 file:
                   $ref: "#/components/schemas/File"
               required:
-                - signedUrl
+                - presignedUrl
                 - index
                 - file
       responses:
@@ -156,7 +156,7 @@ components:
         - message
         - errorCode
 
-    SignedUrl:
+    PresignedUrl:
       type: string
       description: ストレージサービスの署名付きURL
       example: "https://bucket-name.s3.ap-northeast-1.amazonaws.com/adverts/images/12345"

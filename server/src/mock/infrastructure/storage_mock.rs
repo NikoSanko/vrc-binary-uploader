@@ -33,7 +33,7 @@ impl MockStorage {
 
 #[async_trait]
 impl Storage for MockStorage {
-    async fn upload_file(&self, signed_url: &str, file_data: &[u8]) -> InfrastructureResult<()> {
-        (self.responder)(signed_url, file_data)
+    async fn upload_file(&self, presigned_url: &str, file_data: &[u8]) -> InfrastructureResult<()> {
+        (self.responder)(presigned_url, file_data)
     }
 }

@@ -345,48 +345,48 @@ impl std::ops::DerefMut for Index {
 /// ストレージサービスの署名付きURL
 #[derive(Debug, Clone, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
-pub struct SignedUrl(pub String);
+pub struct PresignedUrl(pub String);
 
-impl validator::Validate for SignedUrl {
+impl validator::Validate for PresignedUrl {
     fn validate(&self) -> std::result::Result<(), validator::ValidationErrors> {
 
         std::result::Result::Ok(())
     }
 }
 
-impl std::convert::From<String> for SignedUrl {
+impl std::convert::From<String> for PresignedUrl {
     fn from(x: String) -> Self {
-        SignedUrl(x)
+        PresignedUrl(x)
     }
 }
 
-impl std::fmt::Display for SignedUrl {
+impl std::fmt::Display for PresignedUrl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
        write!(f, "{}", self.0)
     }
 }
 
-impl std::str::FromStr for SignedUrl {
+impl std::str::FromStr for PresignedUrl {
     type Err = std::string::ParseError;
     fn from_str(x: &str) -> std::result::Result<Self, Self::Err> {
-        std::result::Result::Ok(SignedUrl(x.to_string()))
+        std::result::Result::Ok(PresignedUrl(x.to_string()))
     }
 }
 
-impl std::convert::From<SignedUrl> for String {
-    fn from(x: SignedUrl) -> Self {
+impl std::convert::From<PresignedUrl> for String {
+    fn from(x: PresignedUrl) -> Self {
         x.0
     }
 }
 
-impl std::ops::Deref for SignedUrl {
+impl std::ops::Deref for PresignedUrl {
     type Target = String;
     fn deref(&self) -> &String {
         &self.0
     }
 }
 
-impl std::ops::DerefMut for SignedUrl {
+impl std::ops::DerefMut for PresignedUrl {
     fn deref_mut(&mut self) -> &mut String {
         &mut self.0
     }

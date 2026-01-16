@@ -8,7 +8,7 @@ use crate::service::error::{ServiceError, ServiceResult};
 
 #[async_trait]
 pub trait UploadSingleImageService: Send + Sync {
-    async fn execute(&self, signed_url: &str, image: &[u8]) -> ServiceResult<()>;
+    async fn execute(&self, presigned_url: &str, image: &[u8]) -> ServiceResult<()>;
 }
 
 pub struct UploadSingleImageServiceImpl {
@@ -24,10 +24,10 @@ impl UploadSingleImageServiceImpl {
 
 #[async_trait]
 impl UploadSingleImageService for UploadSingleImageServiceImpl {
-    async fn execute(&self, signed_url: &str, image: &[u8]) -> ServiceResult<()> {
-        if signed_url.trim().is_empty() {
+    async fn execute(&self, presigned_url: &str, image: &[u8]) -> ServiceResult<()> {
+        if presigned_url.trim().is_empty() {
             return Err(ServiceError::Validation(
-                "signed url must not be empty".to_string(),
+                "presigned url must not be empty".to_string(),
             ));
         }
 
@@ -57,7 +57,7 @@ impl UploadSingleImageService for UploadSingleImageServiceImpl {
             })?;
 
         self.storage
-            .upload_file(signed_url, &dds_data)
+            .upload_file(presigned_url, &dds_data)
             .await
             .map_err(|e| {
                 error!("Failed to upload file to storage: {}", e);

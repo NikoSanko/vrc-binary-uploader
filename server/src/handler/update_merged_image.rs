@@ -14,7 +14,7 @@ pub async fn handle(
 ) -> Result<apis::default::UpdateMergedImageResponse, ()> {
     info!("update_merged_image() called");
 
-    let mut signed_url: Option<String> = None;
+    let mut presigned_url: Option<String> = None;
     let mut index: Option<i32> = None;
     let mut metadata: Option<String> = None;
     let mut _file_data: Option<Vec<u8>> = None;
@@ -23,9 +23,9 @@ pub async fn handle(
         let name = field.name().unwrap_or("").to_string();
         if let Ok(data) = field.bytes().await {
             match name.as_str() {
-                "signedUrl" => {
+                "presignedUrl" => {
                     if let Ok(s) = String::from_utf8(data.to_vec()) {
-                        signed_url = Some(s);
+                        presigned_url = Some(s);
                     }
                 }
                 "index" => {
@@ -50,7 +50,7 @@ pub async fn handle(
         }
     }
 
-    if signed_url.is_none() || index.is_none() || metadata.is_none() {
+    if presigned_url.is_none() || index.is_none() || metadata.is_none() {
         return Ok(
             apis::default::UpdateMergedImageResponse::Status400_BadRequest(models::ErrorResponse {
                 message: "Bad Request".to_string(),
@@ -60,7 +60,7 @@ pub async fn handle(
         );
     }
 
-    let _signed_url = signed_url.unwrap();
+    let _presigned_url = presigned_url.unwrap();
     let _index = index.unwrap();
     let _file_data = _file_data.unwrap_or_default();
 
