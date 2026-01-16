@@ -69,8 +69,7 @@ paths:
                   $ref: "#/components/schemas/Files"
               required:
                 - signedUrl
-                - metadata
-                - file
+                - files
       responses:
         '200':
           $ref: "#/components/responses/Success200"
@@ -99,7 +98,6 @@ paths:
               required:
                 - signedUrl
                 - index
-                - metadata
                 - file
       responses:
         '200':
