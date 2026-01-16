@@ -11,6 +11,7 @@ use tower_http::cors::CorsLayer;
 mod handler;
 mod infrastructure;
 mod mock;
+mod model;
 mod service;
 
 #[tokio::main]

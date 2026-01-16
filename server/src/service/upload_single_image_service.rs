@@ -3,6 +3,7 @@ use log::{error, info};
 use std::sync::Arc;
 
 use crate::infrastructure::{Converter, Storage};
+use crate::model::{Image, ImageError};
 use crate::service::error::{ServiceError, ServiceResult};
 
 #[async_trait]
@@ -30,18 +31,30 @@ impl UploadSingleImageService for UploadSingleImageServiceImpl {
             ));
         }
 
-        if image.is_empty() {
-            return Err(ServiceError::Validation(
-                "image bytes must not be empty".to_string(),
-            ));
-        }
+        // 画像データをモデルに変換（バリデーション付き）
+        let image_model = Image::try_from(image).map_err(|e| match e {
+            ImageError::EmptyData => {
+                ServiceError::Validation("image bytes must not be empty".to_string())
+            }
+            ImageError::DecodeError(msg) => {
+                ServiceError::Validation(format!("failed to decode image: {}", msg))
+            }
+            ImageError::InvalidDimensions { width, height } => ServiceError::Validation(format!(
+                "image dimensions must be multiples of 4 (width: {}, height: {})",
+                width, height
+            )),
+        })?;
 
         info!("Starting upload_single_image_service");
 
-        let dds_data = self.converter.jpeg_to_dds(image).await.map_err(|e| {
-            error!("Failed to convert image to dds: {}", e);
-            ServiceError::from(e)
-        })?;
+        let dds_data = self
+            .converter
+            .jpeg_to_dds(image_model.as_bytes())
+            .await
+            .map_err(|e| {
+                error!("Failed to convert image to dds: {}", e);
+                ServiceError::from(e)
+            })?;
 
         self.storage
             .upload_file(signed_url, &dds_data)

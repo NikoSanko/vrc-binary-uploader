@@ -3,6 +3,7 @@ use log::{error, info};
 use std::sync::Arc;
 
 use crate::infrastructure::{Converter, Storage};
+use crate::model::{Image, ImageError};
 use crate::service::error::{ServiceError, ServiceResult};
 
 #[async_trait]
@@ -41,20 +42,37 @@ impl UploadMergedImageService for UploadMergedImageServiceImpl {
             images.len()
         );
 
-        // 各画像をDDSに変換
+        // 各画像をモデルに変換してからDDSに変換
         let mut dds_data_list = Vec::new();
-        for (index, image) in images.iter().enumerate() {
-            if image.is_empty() {
-                return Err(ServiceError::Validation(format!(
-                    "image at index {} is empty",
-                    index
-                )));
-            }
-
-            let dds_data = self.converter.jpeg_to_dds(image).await.map_err(|e| {
-                error!("Failed to convert image {} to dds: {}", index, e);
-                ServiceError::from(e)
+        for (index, image_bytes) in images.iter().enumerate() {
+            // 画像データをモデルに変換（バリデーション付き）
+            let image_model = Image::try_from(image_bytes.as_slice()).map_err(|e| {
+                match e {
+                    ImageError::EmptyData => ServiceError::Validation(format!(
+                        "image at index {} is empty",
+                        index
+                    )),
+                    ImageError::DecodeError(msg) => ServiceError::Validation(format!(
+                        "failed to decode image at index {}: {}",
+                        index, msg
+                    )),
+                    ImageError::InvalidDimensions { width, height } => {
+                        ServiceError::Validation(format!(
+                            "image at index {}: dimensions must be multiples of 4 (width: {}, height: {})",
+                            index, width, height
+                        ))
+                    }
+                }
             })?;
+
+            let dds_data = self
+                .converter
+                .jpeg_to_dds(image_model.as_bytes())
+                .await
+                .map_err(|e| {
+                    error!("Failed to convert image {} to dds: {}", index, e);
+                    ServiceError::from(e)
+                })?;
 
             dds_data_list.push(dds_data);
         }

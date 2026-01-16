@@ -1,7 +1,11 @@
+use std::str::FromStr;
+
 use axum::extract::Multipart;
 use axum_extra::extract::{CookieJar, Host};
 use generated::apis;
 use generated::models;
+use generated::types::Nullable;
+use generated::types::Object;
 use http::Method;
 use log::{info, warn};
 
@@ -71,24 +75,32 @@ pub async fn handle(
         Ok(_) => {}
         Err(ServiceError::Validation(msg)) => {
             info!("Validation error: {}", msg);
+            let msg: Option<Nullable<Object>> = Some(Nullable::from(
+                Object::from_str(&msg)
+                    .unwrap_or(Object::from_str("failed to parse message").unwrap()),
+            ));
             return Ok(
                 apis::default::UploadMergedImageResponse::Status400_BadRequest(
                     models::ErrorResponse {
                         message: error_message::BAD_REQUEST.to_string(),
                         error_code: error_code::INVALID_INPUT.to_string(),
-                        details: None,
+                        details: msg,
                     },
                 ),
             );
         }
         Err(ServiceError::Infrastructure(e)) => {
             info!("Infrastructure error: {}", e);
+            let msg: Option<Nullable<Object>> = Some(Nullable::from(
+                Object::from_str(&e.to_string())
+                    .unwrap_or(Object::from_str("failed to parse message").unwrap()),
+            ));
             return Ok(
                 apis::default::UploadMergedImageResponse::Status500_InternalServerError(
                     models::ErrorResponse {
                         message: error_message::INTERNAL_SERVER_ERROR.to_string(),
                         error_code: error_code::INFRASTRUCTURE_FAILED.to_string(),
-                        details: None,
+                        details: msg,
                     },
                 ),
             );
