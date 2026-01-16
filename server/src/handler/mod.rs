@@ -76,7 +76,14 @@ impl apis::default::Default<()> for ServerImpl {
         cookies: &CookieJar,
         body: Multipart,
     ) -> Result<apis::default::UploadMergedImageResponse, ()> {
-        upload_merged_image::handle(method, host, cookies, body, self.upload_merged_image_service.as_ref()).await
+        upload_merged_image::handle(
+            method,
+            host,
+            cookies,
+            body,
+            self.upload_merged_image_service.as_ref(),
+        )
+        .await
     }
 
     /// 複数画像を束ねたファイルの指定枚目だけ更新する

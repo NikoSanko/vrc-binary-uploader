@@ -77,14 +77,14 @@ impl UploadMergedImageService for UploadMergedImageServiceImpl {
 }
 
 /// 複数のDDSデータを独自形式にまとめる
-/// 
+///
 /// フォーマット:
 /// - Header: Texture Count (4byte, Int32, Little Endian)
 /// - Index: Data Size List (4byte * N, 各DDSデータのサイズ)
 /// - Data: Concatenated DDS Binaries
 fn create_merged_format(dds_data_list: &[Vec<u8>]) -> ServiceResult<Vec<u8>> {
     let count = dds_data_list.len();
-    
+
     if count == 0 {
         return Err(ServiceError::Validation(
             "dds data list must not be empty".to_string(),

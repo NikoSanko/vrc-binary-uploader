@@ -6,12 +6,12 @@ use axum::{
     routing::put,
     Router,
 };
+use dotenvy::dotenv;
 use log::{error, info};
 use std::env;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use tokio::fs;
-use dotenvy::dotenv;
 
 /// ファイルをアップロードするエンドポイント
 /// PUT /upload/{filename}
@@ -27,19 +27,16 @@ async fn upload_file(
     }
 
     // 保存先ディレクトリを取得
-    let storage_dir = env::var("MOCK_STORAGE_DIR")
-        .unwrap_or_else(|_| "./mock-storage".to_string());
+    let storage_dir = env::var("MOCK_STORAGE_DIR").unwrap_or_else(|_| "./mock-storage".to_string());
     let storage_path = PathBuf::from(&storage_dir);
 
     // ディレクトリが存在しない場合は作成
     if !storage_path.exists() {
         info!("Creating storage directory: {}", storage_dir);
-        fs::create_dir_all(&storage_path)
-            .await
-            .map_err(|e| {
-                error!("Failed to create storage directory: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+        fs::create_dir_all(&storage_path).await.map_err(|e| {
+            error!("Failed to create storage directory: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     }
 
     // ファイルパスを構築
@@ -52,12 +49,10 @@ async fn upload_file(
         body.len(),
         file_path.display()
     );
-    fs::write(&file_path, &body)
-        .await
-        .map_err(|e| {
-            error!("Failed to write file {}: {}", file_path.display(), e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    fs::write(&file_path, &body).await.map_err(|e| {
+        error!("Failed to write file {}: {}", file_path.display(), e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     info!("File saved successfully: {}", file_path.display());
 
@@ -79,8 +74,7 @@ async fn main() {
         .expect("MOCK_STORAGE_PORT must be a valid port number");
 
     // 保存先ディレクトリを取得
-    let storage_dir = env::var("MOCK_STORAGE_DIR")
-        .unwrap_or_else(|_| "./mock-storage".to_string());
+    let storage_dir = env::var("MOCK_STORAGE_DIR").unwrap_or_else(|_| "./mock-storage".to_string());
 
     info!("Starting mock storage server");
     info!("Port: {}", port);
@@ -92,7 +86,11 @@ async fn main() {
         .unwrap_or_else(|_| "104857600".to_string()) // 100MB
         .parse::<usize>()
         .unwrap_or(104857600);
-    info!("Body size limit: {} bytes ({} MB)", body_limit, body_limit / 1024 / 1024);
+    info!(
+        "Body size limit: {} bytes ({} MB)",
+        body_limit,
+        body_limit / 1024 / 1024
+    );
 
     // ルーターを構築
     let app = Router::new()
