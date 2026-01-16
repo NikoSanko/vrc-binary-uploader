@@ -1,3 +1,4 @@
+use axum::extract::DefaultBodyLimit;
 use dotenvy::dotenv;
 use generated::server;
 use log::info;
@@ -24,13 +25,28 @@ async fn main() {
         storage.clone(),
     ));
     let upload_merged_service = Arc::new(service::UploadMergedImageServiceImpl::new(
-        converter,
-        storage,
+        converter, storage,
     ));
     let server_impl = handler::ServerImpl::new(upload_service, upload_merged_service);
 
+    // ボディサイズ制限を設定（デフォルトは2MB、100MBに設定）
+    // 環境変数で設定可能（デフォルト: 100MB = 100 * 1024 * 1024 bytes）
+    let body_limit = env::var("API_SERVER_BODY_LIMIT")
+        .unwrap_or_else(|_| "104857600".to_string()) // 100MB
+        .parse::<usize>()
+        .unwrap_or(104857600);
+    info!(
+        "Body size limit: {} bytes ({} MB)",
+        body_limit,
+        body_limit / 1024 / 1024
+    );
+
     // 生成されたルーターを使用
-    let app = server::new(server_impl).layer(ServiceBuilder::new().layer(CorsLayer::permissive()));
+    let app = server::new(server_impl).layer(
+        ServiceBuilder::new()
+            .layer(CorsLayer::permissive())
+            .layer(DefaultBodyLimit::max(body_limit)),
+    );
 
     let host = env::var("API_SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = env::var("API_SERVER_PORT").unwrap_or_else(|_| "9090".to_string());
