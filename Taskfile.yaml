@@ -33,7 +33,22 @@ tasks:
   gen:crunch:
     desc: crunchをビルド
     cmds:
-      - docker run --rm -v "${PWD}:/workspace" -w /workspace/crunch -e JOBS=$(nproc) ubuntu:latest bash -c "apt-get update && apt-get install -y cmake build-essential && cmake -S. -Bbuild && cmake --build build --parallel $JOBS && cp build/crunch /workspace/server/resources/bin"
+      - |
+        if [ "$(uname)" = "Darwin" ]; then
+          echo "macOS環境を想定しています。ネイティブビルドを実行します..."
+          if ! command -v cmake &> /dev/null; then
+            echo "エラー: cmakeがインストールされていません"
+            echo "Homebrewでインストールしてください: brew install cmake"
+            exit 1
+          fi
+          cd crunch && \
+          cmake -S. -Bbuild && \
+          cmake --build build --parallel $(sysctl -n hw.ncpu) && \
+          cp build/crunch ../server/resources/bin/crunch
+        else
+          echo "Linux環境を想定しています。Dockerでビルドを実行します..."
+          docker run --rm -v "${PWD}:/workspace" -w /workspace/crunch -e JOBS=$(nproc) ubuntu:latest bash -c "apt-get update && apt-get install -y cmake build-essential && cmake -S. -Bbuild && cmake --build build --parallel $JOBS && cp build/crunch /workspace/server/resources/bin/crunch"
+        fi
 
   test:
     desc: テストを実行
