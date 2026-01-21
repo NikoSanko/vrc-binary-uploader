@@ -53,7 +53,7 @@ pub async fn handle(
             apis::default::UploadMergedImageResponse::Status400_BadRequest(models::ErrorResponse {
                 message: error_message::BAD_REQUEST.to_string(),
                 error_code: error_code::INVALID_INPUT.to_string(),
-                details: None,
+                details: Some(Nullable::from(Object::from_str("presignedUrl is required").unwrap())),
             }),
         );
     }
@@ -63,7 +63,7 @@ pub async fn handle(
             apis::default::UploadMergedImageResponse::Status400_BadRequest(models::ErrorResponse {
                 message: error_message::BAD_REQUEST.to_string(),
                 error_code: error_code::INVALID_INPUT.to_string(),
-                details: None,
+                details: Some(Nullable::from(Object::from_str("files are required").unwrap())),
             }),
         );
     }
