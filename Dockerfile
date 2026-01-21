@@ -7,10 +7,22 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
+    cmake \
+    build-essential \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # ソースコードをコピー
 COPY . .
+
+# crunch リポジトリを指定のコミットからクローンしてビルド
+RUN git clone https://github.com/DaemonEngine/crunch.git crunch_repo \
+    && cd crunch_repo \
+    && git checkout e242bb2a7ae7efc44d144fd5d621b35baddeab25 \
+    && cmake -S . -B build \
+    && cmake --build build --parallel $(nproc) \
+    && mkdir -p /app/server/resources/bin \
+    && cp build/crunch /app/server/resources/bin/crunch
 
 # アプリケーションをビルド
 RUN cargo build --release -p image-uploader-server
