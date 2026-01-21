@@ -80,6 +80,13 @@ impl UploadMergedImageService for UploadMergedImageServiceImpl {
         // 独自形式にまとめる
         let merged_data = create_merged_format(&dds_data_list)?;
 
+        // 10 MB を超えていたらエラー
+        if merged_data.len() > 10 * 1024 * 1024 {
+            return Err(ServiceError::Validation(
+                "merged data size must be less than 10 MB".to_string(),
+            ));
+        }
+
         // ストレージにアップロード
         self.storage
             .upload_file(presigned_url, &merged_data)
@@ -309,5 +316,26 @@ mod tests {
             assert!(msg.contains("dimensions must be multiples of 4"));
             assert!(msg.contains("index 1"));
         }
+    }
+
+    #[tokio::test]
+    async fn 出力ファイルサイズが10mbを超えるならバリデーションエラーを返す() {
+        let service = UploadMergedImageServiceImpl::new(
+            Arc::new(MockConverter::succeed()),
+            Arc::new(MockStorage::succeed()),
+        );
+        let jpeg_data = fs::read("resources/4_multiple_size.jpg")
+            .await
+            .unwrap();
+        let file_size = jpeg_data.len();
+        let mut images = Vec::new();
+        let mut count = 0;
+        while file_size * count < 10 * 1024 * 1024 {
+            images.push(jpeg_data.clone());
+            count += 1;
+        }
+
+        let result = service.execute("https://example.com", &images).await;
+        assert!(matches!(result, Err(ServiceError::Validation(_))));
     }
 }
